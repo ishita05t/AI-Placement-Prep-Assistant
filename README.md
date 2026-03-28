@@ -1,129 +1,198 @@
-# Question-Answering-System-using-RAG
+# 💼 AI Placement Prep Assistant
 
-By [<b>Hema Kalyan Murapaka</b>](https://hemakalyan.netlify.app)
+> An AI-powered interview preparation assistant with explainable retrieval and conversational memory — built using RAG architecture.
 
-Connect with me on social media and explore my work:
+![Python](https://img.shields.io/badge/Python-3.13-blue?style=flat-square&logo=python)
+![LangChain](https://img.shields.io/badge/LangChain-0.3.25-green?style=flat-square)
+![Streamlit](https://img.shields.io/badge/Streamlit-1.38.0-red?style=flat-square&logo=streamlit)
+![Groq](https://img.shields.io/badge/Groq-LLaMA3-orange?style=flat-square)
+![FAISS](https://img.shields.io/badge/FAISS-Vector%20Store-purple?style=flat-square)
+![License](https://img.shields.io/badge/License-GPL%20v3-yellow?style=flat-square)
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/hemakalyan)
-[![GitHub](https://img.shields.io/badge/GitHub-Follow-181717?style=flat-square&logo=github)](https://github.com/KalyanM45)
-[![Medium](https://img.shields.io/badge/Medium-Follow-03a57a?style=flat-square&logo=medium)](https://medium.com/@kalyan45)
-[![Twitter](https://img.shields.io/twitter/follow/KalyanM45?style=social)](https://x.com/mhemakalyan)
-[![Sponsor Hema Kalyan Murapaka](https://img.shields.io/badge/Sponsor-Hema_Kalyan-28a745?style=flat-square&logo=github-sponsors)](https://github.com/sponsors/KalyanM45)
+---
 
-**Special Thanks to GitHub Sponsors**
+## 🚀 About The Project
 
-## About The Project
+**AI Placement Prep Assistant** is a RAG-based (Retrieval-Augmented Generation) application that lets students upload their own interview preparation PDFs — such as HR question banks, DSA notes, system design guides, and company-specific prep material — and ask questions conversationally, just like ChatGPT.
 
+The system retrieves relevant chunks from the uploaded documents and generates accurate, context-grounded answers using the **Groq LLaMA 3.1** model — with source attribution showing exactly which document the answer came from.
 
-The Document Question Answering System is a sophisticated tool designed to streamline information retrieval from vast document collections. Built on a foundation of advanced natural language processing techniques, the system features a user-friendly interface powered by Streamlit. Leveraging the LangChain framework and Google Generative AI, it ingests documents, converts them into vector embeddings, and employs the Retrieval augmentation generation(RAG) architecture for accurate question answering. Users can input queries through the intuitive interface, with the system retrieving precise answers based on the document context. With its efficiency, accuracy, and scalability, the system finds applications in research, knowledge management, education, and customer support, representing a significant advancement in information access technology.
+---
 
-## Library Requirements
+## ✨ Features
 
- - faiss-cpu
- - langchain-groq
- - PyPDF2
- - langchain_google_genai
- - langchain
- - streamlit
- - python-dotenv
+- 📄 **Multi-PDF Upload** — Upload multiple interview prep PDFs directly from the browser
+- 🔍 **Semantic Search** — HuggingFace embeddings + FAISS vector store for accurate retrieval
+- 🧠 **Conversational Memory** — Remembers previous questions in the session (true chat memory)
+- 📌 **Source Citation** — Shows which document each answer came from
+- ⚡ **Fast Responses** — Powered by Groq's LLaMA 3.1 8B Instant model
+- 💬 **ChatGPT-style UI** — Clean chat bubble interface built with Streamlit
+- ⏱️ **Response Time Tracking** — Shows how long each answer took
 
-## Getting Started
+---
 
-This will help you understand how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+## 🏗️ Architecture
 
-## Installation Steps
+```
+PDF Documents
+     │
+     ▼
+┌─────────────────┐
+│  PDF Loader     │  ← PyPDFDirectoryLoader
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Text Chunker   │  ← RecursiveCharacterTextSplitter
+│  chunk=1000     │     overlap=200
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Embeddings     │  ← HuggingFace all-MiniLM-L6-v2
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Vector Store   │  ← FAISS (local)
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Retriever      │  ← Top-4 relevant chunks
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  LLM            │  ← Groq LLaMA 3.1 8B Instant
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Answer +       │  ← Displayed in Streamlit UI
+│  Source Docs    │     with chat memory
+└─────────────────┘
+```
 
-### Option 1: Installation from GitHub
+---
 
-Follow these steps to install and set up the project directly from the GitHub repository:
+## 🛠️ Tech Stack
 
-1. **Clone the Repository**
-   - Open your terminal or command prompt.
-   - Navigate to the directory where you want to install the project.
-   - Run the following command to clone the GitHub repository:
-     ```
-     git clone https://github.com/KalyanMurapaka45/Question-Answering-System-using-RAG.git
-     ```
+| Layer | Technology |
+|---|---|
+| Frontend | Streamlit |
+| LLM | Groq — LLaMA 3.1 8B Instant |
+| Embeddings | HuggingFace — all-MiniLM-L6-v2 |
+| Vector Store | FAISS |
+| Framework | LangChain |
+| Memory | ConversationBufferMemory |
+| PDF Loader | PyPDFDirectoryLoader |
+| Environment | Python 3.13 |
 
-2. **Create a Virtual Environment** (Optional but recommended)
-   - It's a good practice to create a virtual environment to manage project dependencies. Run the following command:
-     ```
-     conda create -p <Environment_Name> python==<python version> -y
-     ```
+---
 
-3. **Activate the Virtual Environment** (Optional)
-   - Activate the virtual environment based on your operating system:
-       ```
-       conda activate <Environment_Name>/
-       ```
+## 📁 Project Structure
 
-4. **Install Dependencies**
-   - Navigate to the project directory:
-     ```
-     cd [project_directory]
-     ```
-   - Run the following command to install project dependencies:
-     ```
-     pip install -r requirements.txt
-     ```
+```
+ai-placement-prep-assistant/
+│
+├── app.py                  # Main Streamlit application
+├── requirements.txt        # Python dependencies
+├── .env                    # API keys (not committed)
+├── .gitignore
+├── data/                   # Uploaded PDFs (not committed)
+└── README.md
+```
 
-5. **Run the Project**
-   - Start the project by running the appropriate command.
-     ```
-     streamlit run app.py
-     ```
+---
 
-6. **Access the Project**
-   - Open a web browser or the appropriate client to access the project.
+## ⚙️ Getting Started
 
+### Prerequisites
 
-## API Key Setup
+- Python 3.13
+- A [Groq API Key](https://console.groq.com/keys) (free)
 
-To use this project, you need an API key from Google Gemini Large Language Model and Groq. Follow these steps to obtain and set up your API key:
+### Installation
 
-1. **Get API Key:**
-   - Visit the Provided Links [Groq API](https://console.groq.com/keys) and [Google API](https://aistudio.google.com/app/apikey).
-   - Follow the instructions to create an account and obtain your API key.
+1. **Clone the repository**
+```bash
+git clone https://github.com/ishita05t/ai-placement-prep-assistant.git
+cd ai-placement-prep-assistant
+```
 
-2. **Set Up API Key:**
-   - Create a file named `.env` in the project root.
-   - Add your API key to the `.env` file:
-     ```dotenv
-     API_KEY=your_api_key_here
-     ```
+2. **Create and activate a virtual environment**
+```bash
+python -m venv venv
+venv\Scripts\Activate.ps1      # Windows
+source venv/bin/activate        # Mac/Linux
+```
 
-   **Note:** Keep your API key confidential. Do not share it publicly or expose it in your code.<br>
+3. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
 
+4. **Set up your API key**
 
-## Contributing
+Create a `.env` file in the project root:
+```env
+GROQ_API_KEY=your_groq_api_key_here
+```
 
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+5. **Run the app**
+```bash
+streamlit run app.py
+```
 
-• **Report bugs**: If you encounter any bugs, please let us know. Open up an issue and let us know the problem.
+---
 
-• **Contribute code**: If you are a developer and want to contribute, follow the instructions below to get started!
+## 🎯 How To Use
+
+1. **Upload PDFs** — Use the sidebar to upload your interview prep PDFs (HR questions, DSA notes, company guides, etc.)
+2. **Process Documents** — Click **"🔄 Process & Embed Documents"** to embed them into the vector store
+3. **Ask Questions** — Type any interview-related question in the chat input
+4. **View Sources** — Expand **"📄 View Sources"** under each answer to see which document it came from
+
+### Example PDFs to upload
+- Amazon Interview Questions
+- System Design Notes
+- Behavioral Questions Guide
+- DSA Cheat Sheet
+- Company-specific Prep Docs
+
+---
+
+## 📝 Resume Bullet
+
+> Built an AI-powered placement preparation assistant using RAG architecture (LangChain + FAISS + Groq LLaMA 3.1) to enable contextual Q&A over multi-document datasets, with source attribution and conversational memory.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
 
 1. Fork the Project
-2. Create your Feature Branch
-3. Commit your Changes
-4. Push to the Branch
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-• **Suggestions**: If you don't want to code but have some awesome ideas, open up an issue explaining some updates or improvements you would like to see!
+---
 
-#### Don't forget to give the project a star! Thanks again!
+## 📄 License
 
-## License
+Distributed under the GNU General Public License v3.0. See `LICENSE` for more information.
 
-This project is licensed under the [Open Source Initiative (OSI)](https://opensource.org/) approved GNU General Public License v3.0 License - see the [LICENSE.txt](LICENSE.txt) file for details.<br>
+---
 
+## 👩‍💻 Author
 
-## Contact Details
+**Ishita Tegar**
 
-Hema Kalyan Murapaka - [kalyanmurapaka274@gmail.com](kalyanmurapaka274@gmail.com)<br>
+[![GitHub](https://img.shields.io/badge/GitHub-ishita05t-181717?style=flat-square&logo=github)](https://github.com/ishita05t)
 
+---
 
-## Acknowledgements
-
-We'd like to extend our gratitude to all individuals and organizations who have played a role in the development and success of this project. Your support, whether through contributions, inspiration, or encouragement, has been invaluable. Thank you for being a part of our journey.
+⭐ If you found this project helpful, please give it a star!
