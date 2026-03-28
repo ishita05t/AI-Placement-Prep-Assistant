@@ -11,6 +11,8 @@
 
 ---
 
+[![Live Demo](https://img.shields.io/badge/Live-Demo-brightgreen?style=flat-square)](https://ai-placement-prep-assistant-j8zbv7n6wnzvpvtw9ntmkb.streamlit.app/)
+
 ## 🚀 About The Project
 
 **AI Placement Prep Assistant** is a RAG-based (Retrieval-Augmented Generation) application that lets students upload their own interview preparation PDFs — such as HR question banks, DSA notes, system design guides, and company-specific prep material — and ask questions conversationally, just like ChatGPT.
@@ -78,16 +80,16 @@ PDF Documents
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | Streamlit |
-| LLM | Groq — LLaMA 3.1 8B Instant |
-| Embeddings | HuggingFace — all-MiniLM-L6-v2 |
-| Vector Store | FAISS |
-| Framework | LangChain |
-| Memory | ConversationBufferMemory |
-| PDF Loader | PyPDFDirectoryLoader |
-| Environment | Python 3.13 |
+| Layer        | Technology                     |
+| ------------ | ------------------------------ |
+| Frontend     | Streamlit                      |
+| LLM          | Groq — LLaMA 3.1 8B Instant    |
+| Embeddings   | HuggingFace — all-MiniLM-L6-v2 |
+| Vector Store | FAISS                          |
+| Framework    | LangChain                      |
+| Memory       | ConversationBufferMemory       |
+| PDF Loader   | PyPDFDirectoryLoader           |
+| Environment  | Python 3.13                    |
 
 ---
 
@@ -116,12 +118,14 @@ ai-placement-prep-assistant/
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/ishita05t/ai-placement-prep-assistant.git
 cd ai-placement-prep-assistant
 ```
 
 2. **Create and activate a virtual environment**
+
 ```bash
 python -m venv venv
 venv\Scripts\Activate.ps1      # Windows
@@ -129,6 +133,7 @@ source venv/bin/activate        # Mac/Linux
 ```
 
 3. **Install dependencies**
+
 ```bash
 pip install -r requirements.txt
 ```
@@ -136,11 +141,13 @@ pip install -r requirements.txt
 4. **Set up your API key**
 
 Create a `.env` file in the project root:
+
 ```env
 GROQ_API_KEY=your_groq_api_key_here
 ```
 
 5. **Run the app**
+
 ```bash
 streamlit run app.py
 ```
@@ -155,6 +162,7 @@ streamlit run app.py
 4. **View Sources** — Expand **"📄 View Sources"** under each answer to see which document it came from
 
 ### Example PDFs to upload
+
 - Amazon Interview Questions
 - System Design Notes
 - Behavioral Questions Guide
