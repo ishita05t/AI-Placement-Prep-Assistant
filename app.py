@@ -1,63 +1,233 @@
 import streamlit as st
 import os
 import time
+import shutil
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain.chains import create_retrieval_chain
+from langchain.chains import ConversationalRetrievalChain
+from langchain.memory import ConversationBufferMemory
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import PyPDFDirectoryLoader
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 load_dotenv()
-groq_api_key = os.getenv('API_KEY')
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
 
-st.set_page_config(page_title="Document Question Answering System", layout="wide")
-st.title("Document Question Answering System")
-st.caption("Initially Ingest the Data into Vector Store and then ask questions.")
+# ─────────────────────────────────────────
+# LLM
+# ─────────────────────────────────────────
+llm = ChatGroq(
+    api_key=os.getenv("GROQ_API_KEY"),
+    model_name="llama-3.1-8b-instant"
+)
 
-llm = ChatGroq(groq_api_key=groq_api_key, model_name="Llama3-8b-8192")
-
+# ─────────────────────────────────────────
+# PROMPT
+# ─────────────────────────────────────────
 prompt_template = """
-Answer the questions based on the provided context only.
-Please provide the most accurate response based on the question
+You are an AI Placement Prep Assistant helping students prepare for job interviews.
+Answer the question based on the provided context from interview preparation materials.
+Be specific, structured, and give examples where possible.
+If the answer is not in the context, say "I don't have enough information on this topic in the loaded documents."
+
 <context>
 {context}
-<context>
-Questions:{input}
-"""
+</context>
 
+Question: {input}
+"""
 prompt = ChatPromptTemplate.from_template(prompt_template)
 
+# ─────────────────────────────────────────
+# VECTOR EMBEDDING
+# ─────────────────────────────────────────
 def vector_embedding():
     if "vectors" not in st.session_state:
-        st.session_state.embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-        loader = PyPDFDirectoryLoader("./Artifacts")
+        st.session_state.embeddings = HuggingFaceEmbeddings(
+            model_name="all-MiniLM-L6-v2"
+        )
+        loader = PyPDFDirectoryLoader("./data")
         docs = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        final_documents = text_splitter.split_documents(docs[:20])
-        st.session_state.vectors = FAISS.from_documents(final_documents, st.session_state.embeddings)
+        if not docs:
+            st.error("No PDFs found in ./data folder. Please upload some PDFs first.")
+            return
+        text_splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200
+        )
+        final_documents = text_splitter.split_documents(docs)
+        st.session_state.vectors = FAISS.from_documents(
+            final_documents,
+            st.session_state.embeddings
+        )
 
-prompt1 = st.text_input("Enter Your Question From Documents")
+# ─────────────────────────────────────────
+# CHAT MEMORY INIT
+# ─────────────────────────────────────────
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-if st.button("Ingest the Data into Vector Store"):
-    vector_embedding()
-    st.write("Data is Ingested in vector store database. You can now ask questions.")
+if "memory" not in st.session_state:
+    st.session_state.memory = ConversationBufferMemory(
+        memory_key="chat_history",
+        return_messages=True,
+        output_key="answer"
+    )
+
+# ─────────────────────────────────────────
+# PAGE CONFIG
+# ─────────────────────────────────────────
+st.set_page_config(
+    page_title="AI Placement Prep Assistant",
+    page_icon="💼",
+    layout="wide"
+)
+
+# ─────────────────────────────────────────
+# SIDEBAR
+# ─────────────────────────────────────────
+with st.sidebar:
+    st.title("💼 Placement Prep")
+    st.markdown("---")
+
+    # ── File Upload ──
+    st.markdown("### 📤 Upload PDFs")
+    uploaded_files = st.file_uploader(
+        "Upload interview PDFs",
+        type=["pdf"],
+        accept_multiple_files=True,
+        label_visibility="collapsed"
+    )
+
+    if uploaded_files:
+        os.makedirs("./data", exist_ok=True)
+        saved = []
+        for uploaded_file in uploaded_files:
+            file_path = os.path.join("./data", uploaded_file.name)
+            with open(file_path, "wb") as f:
+                f.write(uploaded_file.getbuffer())
+            saved.append(uploaded_file.name)
+        st.success(f"✅ Saved {len(saved)} file(s) to ./data")
+        for name in saved:
+            st.write(f"  - `{name}`")
+
+    st.markdown("---")
+
+    # ── Show existing PDFs ──
+    st.markdown("### 📁 Loaded Documents")
+    if os.path.exists("./data"):
+        pdf_files = [f for f in os.listdir("./data") if f.endswith(".pdf")]
+        if pdf_files:
+            for f in pdf_files:
+                st.write(f"  - `{f}`")
+        else:
+            st.caption("No PDFs yet. Upload some above.")
+    else:
+        st.caption("No PDFs yet. Upload some above.")
+
+    st.markdown("---")
+
+    # ── Process Button ──
+    st.markdown("### ⚙️ Data Management")
+    if st.button("🔄 Process & Embed Documents", use_container_width=True):
+        # Reset vectors so re-embedding happens fresh
+        if "vectors" in st.session_state:
+            del st.session_state["vectors"]
+        with st.spinner("Embedding documents... this may take a minute."):
+            vector_embedding()
+        if "vectors" in st.session_state:
+            st.success("✅ Ready! Ask your questions.")
+
+    if st.button("🗑️ Clear Chat History", use_container_width=True):
+        st.session_state.chat_history = []
+        st.session_state.memory.clear()
+        st.success("Chat cleared!")
+
+    st.markdown("---")
+
+    # ── Sample Questions ──
+    st.markdown("### 📌 Sample Questions")
+    st.markdown("""
+    - What are common HR interview questions?
+    - Explain system design for a URL shortener
+    - What is the difference between BFS and DFS?
+    - How do I answer "Tell me about yourself"?
+    - What are Amazon leadership principles?
+    """)
+
+# ─────────────────────────────────────────
+# MAIN UI
+# ─────────────────────────────────────────
+st.title("💼 AI Placement Prep Assistant")
+st.caption("Your AI-powered interview preparation assistant with explainable retrieval and conversational memory.")
+st.markdown("---")
+
+# Display chat history
+for chat in st.session_state.chat_history:
+    if chat["role"] == "user":
+        with st.chat_message("user"):
+            st.write(chat["content"])
+    else:
+        with st.chat_message("assistant"):
+            st.write(chat["content"])
+            if "sources" in chat:
+                with st.expander("📄 View Sources"):
+                    for source in chat["sources"]:
+                        st.write(f"- `{source}`")
+
+# ─────────────────────────────────────────
+# CHAT INPUT
+# ─────────────────────────────────────────
+prompt1 = st.chat_input("Ask an interview-related question...")
 
 if prompt1:
-    try:
-        if "vectors" in st.session_state:
-            document_chain = create_stuff_documents_chain(llm, prompt)
-            retriever = st.session_state.vectors.as_retriever()
-            retrieval_chain = create_retrieval_chain(retriever, document_chain)
-            start = time.process_time()
-            response = retrieval_chain.invoke({'input': prompt1})
-            st.write(f"Response time: {time.process_time() - start} seconds")
-            st.write(response['answer'])
-    except:
-        st.write("Please Ingest Data First. Click on the button - Ingest the Data into Vector Store")
+    if "vectors" not in st.session_state:
+        st.warning("⚠️ Please upload PDFs and click '🔄 Process & Embed Documents' first.")
+    else:
+        with st.chat_message("user"):
+            st.write(prompt1)
 
+        st.session_state.chat_history.append({
+            "role": "user",
+            "content": prompt1
+        })
 
+        with st.chat_message("assistant"):
+            with st.spinner("Thinking..."):
+                conversational_chain = ConversationalRetrievalChain.from_llm(
+                    llm=llm,
+                    retriever=st.session_state.vectors.as_retriever(
+                        search_kwargs={"k": 4}
+                    ),
+                    memory=st.session_state.memory,
+                    return_source_documents=True,
+                    verbose=False
+                )
+
+                start = time.process_time()
+                response = conversational_chain.invoke({"question": prompt1})
+                elapsed = time.process_time() - start
+
+                answer = response["answer"]
+                source_docs = response.get("source_documents", [])
+
+                sources = list(set([
+                    os.path.basename(doc.metadata.get("source", "Unknown"))
+                    for doc in source_docs
+                ]))
+
+                st.write(answer)
+                st.caption(f"⏱️ Response time: {elapsed:.2f}s")
+
+                with st.expander("📄 View Sources"):
+                    for source in sources:
+                        st.write(f"- `{source}`")
+
+        st.session_state.chat_history.append({
+            "role": "assistant",
+            "content": answer,
+            "sources": sources
+        })
